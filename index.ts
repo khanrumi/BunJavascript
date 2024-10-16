@@ -1,24 +1,45 @@
-import { serve } from "bun";
+import figlet from "figlet";
 
-serve({
+const server = Bun.serve({
   port: 3000,
   fetch(req) {
-    // Handle specific routes
-    if (req.url === "/") {
-      return new Response("Hello, Bun API!", { status: 200 });
+    const url = new URL(req.url);
+
+    // Home route
+    if (url.pathname === '/') {
+      const body = figlet.textSync("video");
+      return new Response(body, { headers: { "Content-Type": "text/plain" } });
     }
 
-    if (req.url === "/api/data") {
-      const data = { message: "This is a sample Bun API", status: "success" };
-      return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
-        status: 200,
-      });
+    // About route
+    if (url.pathname === '/about') {
+      const aboutText = "About Me";
+      return new Response(aboutText, { headers: { "Content-Type": "text/plain" } });
     }
 
-    // Default case for all other routes (404 Not Found)
-    return new Response("Not Found", { status: 404 });
+    // Contact route - throwing error
+    if (url.pathname === '/contact') {
+      throw new Error('Could not fetch feed');
+    }
+    
+    if (url.pathname === '/greet.txt') {
+      return new Response (Bun.file('./greet.txt'))
+    }
+
+    // 404 for any other route
+    return new Response('404 Not Found', { status: 404 });
+  },
+
+  // Error handling middleware
+  error(error) {
+    return new Response(`<pre>${error}\n${error.stack}</pre>`, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
   },
 });
 
-console.log("Bun API is running on http://localhost:3000");
+console.log(`Listening on Port http://localhost:${server.port}`);
+
+
